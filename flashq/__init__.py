@@ -36,6 +36,7 @@ from flashq.canvas import (
     chord,
     group,
 )
+from flashq.dlq import DeadLetterQueue, DeadTask
 from flashq.enums import TaskPriority, TaskState
 from flashq.exceptions import (
     BackendError,
@@ -59,6 +60,8 @@ __all__ = [
     "Chord",
     "ChordHandle",
     "CronSchedule",
+    "DeadLetterQueue",
+    "DeadTask",
     "DuplicateTaskError",
     "FlashQ",
     "FlashQError",
