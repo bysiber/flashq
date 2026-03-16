@@ -226,7 +226,7 @@ class SQLiteBackend(BaseBackend):
         with self._transaction(immediate=True):
             self.conn.execute(
                 """
-                INSERT INTO tasks (id, task_name, queue, data, priority, state,
+                INSERT OR REPLACE INTO tasks (id, task_name, queue, data, priority, state,
                                    eta, retries, max_retries, retry_delay,
                                    created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
