@@ -1,0 +1,116 @@
+{
+  "timestamp": "2026-03-16T12:03:40",
+  "python_version": "3.14.2 (main, Dec  5 2025, 16:49:16) [Clang 17.0.0 (clang-1700.4.4.1)]",
+  "results": [
+    {
+      "name": "enqueue_10000",
+      "tasks_total": 10000,
+      "duration_s": 0.518,
+      "throughput_tasks_per_sec": 19298.5,
+      "avg_latency_ms": 0.05,
+      "p50_latency_ms": 0.05,
+      "p95_latency_ms": 0.05,
+      "p99_latency_ms": 0.05,
+      "errors": 0
+    },
+    {
+      "name": "roundtrip_1000_c4",
+      "tasks_total": 1000,
+      "duration_s": 25.67,
+      "throughput_tasks_per_sec": 39.0,
+      "avg_latency_ms": 0.02,
+      "p50_latency_ms": 0.01,
+      "p95_latency_ms": 0.05,
+      "p99_latency_ms": 0.05,
+      "errors": 0,
+      "enqueue_time_s": 0.038,
+      "exec_time_s": 25.632
+    },
+    {
+      "name": "cpu_bound_500_c4",
+      "tasks_total": 500,
+      "duration_s": 12.797,
+      "throughput_tasks_per_sec": 39.1,
+      "avg_latency_ms": 0.03,
+      "p50_latency_ms": 0.02,
+      "p95_latency_ms": 0.06,
+      "p99_latency_ms": 0.08,
+      "errors": 0
+    },
+    {
+      "name": "io_bound_500_c8",
+      "tasks_total": 500,
+      "duration_s": 6.67,
+      "throughput_tasks_per_sec": 75.0,
+      "avg_latency_ms": 11.64,
+      "p50_latency_ms": 11.75,
+      "p95_latency_ms": 12.58,
+      "p99_latency_ms": 12.82,
+      "errors": 0
+    },
+    {
+      "name": "priority_100",
+      "tasks_total": 100,
+      "duration_s": 5.003,
+      "throughput_tasks_per_sec": 9.8,
+      "avg_latency_ms": 0,
+      "p50_latency_ms": 0,
+      "p95_latency_ms": 0,
+      "p99_latency_ms": 0,
+      "errors": 0,
+      "processed": 49
+    },
+    {
+      "name": "scaling_c1",
+      "tasks_total": 500,
+      "duration_s": 52.015,
+      "throughput_tasks_per_sec": 9.6,
+      "avg_latency_ms": 0.05,
+      "p50_latency_ms": 0.04,
+      "p95_latency_ms": 0.05,
+      "p99_latency_ms": 0.09,
+      "errors": 0,
+      "enqueue_time_s": 0.044,
+      "exec_time_s": 51.971
+    },
+    {
+      "name": "scaling_c2",
+      "tasks_total": 500,
+      "duration_s": 25.97,
+      "throughput_tasks_per_sec": 19.3,
+      "avg_latency_ms": 0.02,
+      "p50_latency_ms": 0.02,
+      "p95_latency_ms": 0.05,
+      "p99_latency_ms": 0.07,
+      "errors": 0,
+      "enqueue_time_s": 0.04,
+      "exec_time_s": 25.93
+    },
+    {
+      "name": "scaling_c4",
+      "tasks_total": 500,
+      "duration_s": 13.023,
+      "throughput_tasks_per_sec": 38.4,
+      "avg_latency_ms": 0.02,
+      "p50_latency_ms": 0.01,
+      "p95_latency_ms": 0.03,
+      "p99_latency_ms": 0.05,
+      "errors": 0,
+      "enqueue_time_s": 0.032,
+      "exec_time_s": 12.991
+    },
+    {
+      "name": "scaling_c8",
+      "tasks_total": 500,
+      "duration_s": 5.001,
+      "throughput_tasks_per_sec": 100.0,
+      "avg_latency_ms": 0.01,
+      "p50_latency_ms": 0.01,
+      "p95_latency_ms": 0.03,
+      "p99_latency_ms": 0.04,
+      "errors": 0,
+      "enqueue_time_s": 0.038,
+      "exec_time_s": 4.963
+    }
+  ]
+}
