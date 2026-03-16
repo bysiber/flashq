@@ -1,0 +1,103 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "flashq"
+version = "0.1.0"
+description = "The task queue that works out of the box — no Redis, no RabbitMQ, just pip install and go."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "Ozden" },
+]
+keywords = ["task-queue", "celery", "async", "background-tasks", "job-queue"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: System :: Distributed Computing",
+    "Typing :: Typed",
+    "Framework :: AsyncIO",
+]
+# Zero required dependencies — SQLite backend uses stdlib only
+dependencies = []
+
+[project.optional-dependencies]
+redis = ["redis>=5.0"]
+postgres = ["psycopg[binary,pool]>=3.1"]
+dashboard = ["starlette>=0.36", "uvicorn>=0.27"]
+all = ["flashq[redis,postgres,dashboard]"]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=4.0",
+    "mypy>=1.8",
+    "ruff>=0.2",
+    "pre-commit>=3.6",
+]
+
+[project.scripts]
+flashq = "flashq.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/ozden/flashq"
+Documentation = "https://flashq.readthedocs.io"
+Repository = "https://github.com/ozden/flashq"
+Issues = "https://github.com/ozden/flashq/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["flashq"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 99
+
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort
+    "N",     # pep8-naming
+    "UP",    # pyupgrade
+    "B",     # flake8-bugbear
+    "SIM",   # flake8-simplify
+    "TCH",   # flake8-type-checking
+    "RUF",   # ruff-specific
+]
+ignore = ["E501"]  # line length handled by formatter
+
+[tool.ruff.lint.isort]
+known-first-party = ["flashq"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.coverage.run]
+source = ["flashq"]
+omit = ["flashq/dashboard/*"]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "if __name__ ==",
+    "@overload",
+    "raise NotImplementedError",
+]
