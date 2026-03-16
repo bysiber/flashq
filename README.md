@@ -5,7 +5,7 @@
 [![CI](https://github.com/bysiber/flashq/actions/workflows/ci.yml/badge.svg)](https://github.com/bysiber/flashq/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/pypi/pyversions/flashq)](https://pypi.org/project/flashq/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-226%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-240%20passing-brightgreen)]()
 
 ---
 
@@ -41,6 +41,7 @@ send_email.delay(to="user@example.com", subject="Welcome!")
 | Task chains/groups | ✅ | ✅ | ❌ | ❌ | ❌ |
 | Middleware system | ✅ | ✅ | ✅ | ❌ | ✅ |
 | Rate limiting | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Web dashboard | ✅ | ⚠️ | ❌ | ❌ | ❌ |
 | Dead letter queue | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Task timeouts | ✅ | ✅ | ✅ | ❌ | ✅ |
 | Periodic/cron scheduler | ✅ | ⚠️ | ❌ | ✅ | ⚠️ |
@@ -199,6 +200,29 @@ limiter.configure("api_call", rate="60/h")    # 60 API calls/hour
 app.add_middleware(limiter)
 ```
 
+## Web Dashboard
+
+Built-in monitoring UI — no extra services needed:
+
+```bash
+flashq dashboard myapp:app --port 5555
+```
+
+Open `http://localhost:5555` to see:
+- Real-time task counts by state (pending, running, success, failure)
+- Task list with filtering by state, queue, and search
+- Task detail modal with args, result, error, traceback
+- Actions: cancel, revoke, purge queue
+- Auto-refreshing every 5 seconds
+
+```python
+# Or embed in your own ASGI app
+from flashq.dashboard import create_dashboard
+
+dashboard = create_dashboard(app, prefix="/admin/tasks")
+# Mount alongside your FastAPI/Starlette app
+```
+
 ## Dead Letter Queue
 
 Inspect and replay permanently failed tasks:
@@ -295,6 +319,8 @@ app = FlashQ(backend=RedisBackend("redis://localhost:6379/0"))
 flashq worker myapp:app                  # Start worker
 flashq worker myapp:app -q emails,sms    # Specific queues
 flashq worker myapp:app -c 16            # 16 concurrent threads
+flashq dashboard myapp:app               # Start web dashboard
+flashq dashboard myapp:app -p 8080       # Custom port
 flashq info myapp:app                    # Queue stats
 flashq purge myapp:app -f                # Purge queue
 ```
@@ -329,8 +355,8 @@ FlashQ uses a clean, modular architecture:
 - [x] Task chains, groups, chords
 - [x] Periodic/cron scheduler
 - [x] CLI (worker, info, purge)
-- [x] 226 tests, 95% core coverage
-- [ ] Web dashboard
+- [x] 240 tests, 95% core coverage
+- [x] Web dashboard (real-time monitoring)
 - [ ] Task result streaming
 - [ ] PyPI publish
 
