@@ -30,6 +30,7 @@ from typing_extensions import ParamSpec
 
 from flashq.enums import TaskPriority
 from flashq.exceptions import DuplicateTaskError, TaskNotFoundError
+from flashq.middleware import Middleware, MiddlewareStack
 from flashq.task import Task
 
 if TYPE_CHECKING:
@@ -73,6 +74,9 @@ class FlashQ:
         # Task registry: task_name → Task instance
         self._registry: dict[str, Task[..., Any]] = {}
 
+        # Middleware stack
+        self._middleware = MiddlewareStack()
+
         # Backend — lazy-init SQLite if not provided
         if backend is not None:
             self._backend = backend
@@ -99,6 +103,15 @@ class FlashQ:
     def registry(self) -> dict[str, Task[..., Any]]:
         """Read-only access to the task registry."""
         return self._registry
+
+    @property
+    def middleware(self) -> MiddlewareStack:
+        """Access the middleware stack."""
+        return self._middleware
+
+    def add_middleware(self, middleware: Middleware) -> None:
+        """Add a middleware to the stack."""
+        self._middleware.add(middleware)
 
     # ──────────────────────────────────────────────
     # Task registration

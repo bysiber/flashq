@@ -97,6 +97,7 @@ class Worker:
             self.name, self.queues, self.concurrency, self.poll_interval,
         )
         self._print_banner()
+        self.app.middleware.on_worker_start()
 
         try:
             self._main_loop()
@@ -115,6 +116,8 @@ class Worker:
         for fut in self._active_futures:
             if not fut.done():
                 fut.result(timeout=30)
+
+        self.app.middleware.on_worker_stop()
 
         logger.info(
             "Worker %r stopped | processed=%d failed=%d",
@@ -166,6 +169,7 @@ class Worker:
     def _execute_task(self, message: TaskMessage) -> None:
         """Execute a single task, handling both sync and async functions."""
         started_at = datetime.datetime.now(datetime.timezone.utc)
+        mw = self.app.middleware
 
         try:
             task = self.app.get_task(message.task_name)
@@ -177,6 +181,14 @@ class Worker:
             )
             return
 
+        # Middleware: before_execute (can skip or modify the message)
+        processed = mw.before_execute(message)
+        if processed is None:
+            logger.info("Task %s [%s] skipped by middleware", message.task_name, message.id[:8])
+            self.app.backend.update_task_state(message.id, TaskState.CANCELLED)
+            return
+        message = processed
+
         logger.info(
             "Executing %s [%s] retry=%d/%d",
             message.task_name, message.id[:8],
@@ -184,12 +196,12 @@ class Worker:
         )
 
         try:
-            # Handle both sync and async task functions
             if inspect.iscoroutinefunction(task.fn):
                 result = self._run_async(task.fn, message)
             else:
                 result = task.fn(*message.args, **message.kwargs)
 
+            mw.after_execute(message, result)
             self._store_success(message, result=result, started_at=started_at)
             self._tasks_processed += 1
 
@@ -197,6 +209,12 @@ class Worker:
             self._handle_retry(message, started_at=started_at)
 
         except Exception as exc:
+            # Middleware can suppress errors
+            if mw.on_error(message, exc):
+                self._store_success(message, result=None, started_at=started_at)
+                self._tasks_processed += 1
+                return
+
             self._tasks_failed += 1
             tb_str = tb_module.format_exc()
             logger.error("Task %s [%s] failed: %s", message.task_name, message.id[:8], exc)
@@ -204,6 +222,7 @@ class Worker:
             if message.retries < message.max_retries:
                 self._handle_retry(message, exc=exc, started_at=started_at)
             else:
+                mw.on_dead(message, exc)
                 logger.error(
                     "Task %s [%s] dead after %d retries",
                     message.task_name, message.id[:8], message.max_retries,
