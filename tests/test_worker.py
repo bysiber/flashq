@@ -172,7 +172,7 @@ class TestWorkerExecution:
         assert result is not None
         assert result.state == TaskState.SUCCESS
         assert result.result == {"status": "done", "count": 42}
-        assert result.runtime_ms > 0
+        assert result.runtime_ms >= 0  # Windows timer resolution can yield 0.0
 
     def test_worker_task_timeout(self, app, backend):
         @app.task(name="timeout_task", timeout=0.5, max_retries=0)
