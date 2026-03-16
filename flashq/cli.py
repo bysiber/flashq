@@ -129,6 +129,26 @@ def cmd_version(args: argparse.Namespace) -> None:
     print(f"flashq {__version__}")
 
 
+def cmd_dashboard(args: argparse.Namespace) -> None:
+    """Start the FlashQ web dashboard."""
+    try:
+        import uvicorn
+    except ImportError:
+        print("Error: Dashboard requires uvicorn. Install with: pip install 'flashq[dashboard]'", file=sys.stderr)
+        sys.exit(1)
+
+    from flashq.dashboard import create_dashboard
+
+    app = _import_app(args.app)
+    dashboard = create_dashboard(app, prefix=args.prefix)
+
+    print("\n⚡ FlashQ Dashboard")
+    print(f"  └─ http://{args.host}:{args.port}{args.prefix}/")
+    print()
+
+    uvicorn.run(dashboard, host=args.host, port=args.port, log_level="info")
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the argument parser."""
     parser = argparse.ArgumentParser(
@@ -194,6 +214,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="Skip confirmation prompt",
     )
     purge_parser.set_defaults(func=cmd_purge)
+
+    # dashboard command
+    dash_parser = subparsers.add_parser("dashboard", help="Start the web dashboard")
+    dash_parser.add_argument("app", help="App path (e.g., 'myapp:app')")
+    dash_parser.add_argument(
+        "-p", "--port",
+        type=int,
+        default=5555,
+        help="Port to listen on (default: 5555)",
+    )
+    dash_parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="Host to bind to (default: 127.0.0.1)",
+    )
+    dash_parser.add_argument(
+        "--prefix",
+        default="",
+        help="URL prefix for routes (e.g., '/flashq')",
+    )
+    dash_parser.set_defaults(func=cmd_dashboard)
 
     return parser
 

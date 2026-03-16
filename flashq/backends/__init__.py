@@ -154,6 +154,44 @@ class BaseBackend(ABC):
         """Return the number of tasks waiting in the schedule."""
 
     # ──────────────────────────────────────────────
+    # Dashboard / stats helpers (concrete defaults)
+    # ──────────────────────────────────────────────
+
+    def get_queue_names(self) -> list[str]:
+        """Return known queue names. Override for efficient implementation."""
+        return ["default"]
+
+    def get_stats(self) -> dict[str, Any]:
+        """Aggregate stats across all queues and states.
+
+        Returns a dict like::
+
+            {
+                "queues": {"default": 12, "emails": 3},
+                "states": {"PENDING": 15, "RUNNING": 2, ...},
+                "scheduled": 5,
+            }
+        """
+        from flashq.enums import TaskState as _TS  # noqa: N814
+
+        queues = {}
+        for q in self.get_queue_names():
+            queues[q] = self.queue_size(q)
+
+        states: dict[str, int] = {}
+        for s in _TS:
+            total = 0
+            for q in self.get_queue_names():
+                total += len(self.get_tasks_by_state(s, queue=q, limit=10000))
+            states[s.value] = total
+
+        return {
+            "queues": queues,
+            "states": states,
+            "scheduled": self.schedule_size(),
+        }
+
+    # ──────────────────────────────────────────────
     # Async variants (optional override)
     # ──────────────────────────────────────────────
 

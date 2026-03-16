@@ -471,3 +471,11 @@ class SQLiteBackend(BaseBackend):
         """Count scheduled tasks."""
         row = self.conn.execute("SELECT COUNT(*) AS cnt FROM schedules").fetchone()
         return row["cnt"] if row else 0
+
+    def get_queue_names(self) -> list[str]:
+        """Get distinct queue names from the tasks table."""
+        rows = self.conn.execute(
+            "SELECT DISTINCT queue FROM tasks ORDER BY queue"
+        ).fetchall()
+        names = [r["queue"] for r in rows]
+        return names if names else ["default"]
