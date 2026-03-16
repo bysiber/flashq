@@ -63,6 +63,17 @@ pip install "flashq[postgres]"
 pip install "flashq[dev]"
 ```
 
+## Try It Now!
+
+See FlashQ in action with the built-in demo — zero config needed:
+
+```bash
+pip install flashq
+python -m flashq.demo
+```
+
+You'll see 20 tasks being created, enqueued, processed by workers, and results printed in real-time.
+
 ## Quick Start
 
 ### 1. Define tasks

@@ -172,6 +172,12 @@ class SQLiteBackend(BaseBackend):
             conn.execute("PRAGMA foreign_keys=ON")
             conn.execute(f"PRAGMA busy_timeout={int(self._timeout * 1000)}")
             self._state.conn = conn
+            # Ensure schema exists on every new connection (thread-safe).
+            # For file-based DBs this is a no-op after first call (IF NOT EXISTS).
+            # For :memory: DBs each thread gets its own DB so this is required.
+            if self._setup_done:
+                for ddl in _SCHEMA:
+                    conn.execute(ddl)
         return self._state.conn  # type: ignore[return-value]
 
     @contextlib.contextmanager
