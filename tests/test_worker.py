@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import asyncio
-import time
 import threading
+import time
 
 import pytest
 
 from flashq import FlashQ, TaskState
 from flashq.backends.sqlite import SQLiteBackend
-from flashq.exceptions import TaskRetryError
 from flashq.worker import Worker
 
 
@@ -205,3 +204,46 @@ class TestWorkerExecution:
         assert result.is_success
         assert result.result == {"sum": 30}
         assert result.runtime_ms > 0
+
+    def test_worker_task_timeout(self, app, backend):
+        """Task that exceeds timeout is terminated."""
+        @app.task(timeout=0.5, max_retries=0)
+        def slow_task() -> str:
+            time.sleep(10)
+            return "should not reach"
+
+        handle = slow_task.delay()
+
+        worker = Worker(app, poll_interval=0.1)
+        t = threading.Thread(target=worker.start, daemon=True)
+        t.start()
+        time.sleep(3)
+        worker.stop()
+        t.join(timeout=5)
+
+        result = backend.get_result(handle.id)
+        assert result is not None
+        assert result.state == TaskState.DEAD
+        assert "timeout" in result.error.lower()
+
+    def test_worker_task_timeout_retries(self, app, backend):
+        """Task that times out is retried if retries available."""
+        attempts = []
+
+        @app.task(timeout=0.3, max_retries=1, retry_delay=0.1)
+        def flaky_timeout() -> str:
+            attempts.append(1)
+            time.sleep(10)
+            return "never"
+
+        flaky_timeout.delay()
+
+        worker = Worker(app, poll_interval=0.1, schedule_interval=0.5)
+        t = threading.Thread(target=worker.start, daemon=True)
+        t.start()
+        time.sleep(6)
+        worker.stop()
+        t.join(timeout=5)
+
+        # Should have attempted at least twice (original + 1 retry)
+        assert len(attempts) >= 2

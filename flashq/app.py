@@ -144,6 +144,7 @@ class FlashQ:
         max_retries: int = 3,
         retry_delay: float = 60.0,
         retry_backoff: bool = False,
+        timeout: float | None = None,
         result_ttl: float = 3600.0,
     ) -> Task[P, R] | Callable[[Callable[P, R]], Task[P, R]]:
         """Register a function as a background task.
@@ -188,6 +189,7 @@ class FlashQ:
                 max_retries=max_retries,
                 retry_delay=retry_delay,
                 retry_backoff=retry_backoff,
+                timeout=timeout,
                 result_ttl=result_ttl,
             )
 

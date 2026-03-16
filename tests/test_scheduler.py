@@ -8,7 +8,7 @@ import pytest
 
 from flashq import FlashQ
 from flashq.backends.sqlite import SQLiteBackend
-from flashq.scheduler import CronSchedule, IntervalSchedule, Scheduler, cron, every
+from flashq.scheduler import CronSchedule, Scheduler, cron, every
 
 
 @pytest.fixture

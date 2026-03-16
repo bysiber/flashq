@@ -11,7 +11,6 @@ from flashq.backends.sqlite import SQLiteBackend
 from flashq.models import TaskMessage, TaskResult
 from flashq.task import Task, TaskHandle
 
-
 # ──────────────────────────────────────────────
 # Fixtures
 # ──────────────────────────────────────────────
@@ -128,7 +127,7 @@ class TestEnqueue:
         def my_task() -> None:
             pass
 
-        handle = my_task.apply(countdown=60)
+        my_task.apply(countdown=60)
         assert app.backend.queue_size("default") == 0
         assert app.backend.schedule_size() == 1
 

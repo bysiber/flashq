@@ -47,6 +47,9 @@ class TaskMessage:
     retry_delay: float = 60.0  # seconds between retries
     retry_backoff: bool = False  # exponential backoff
 
+    # Timeout
+    timeout: float | None = None  # seconds; None = no timeout
+
     # Metadata
     created_at: datetime.datetime = field(
         default_factory=lambda: datetime.datetime.now(datetime.timezone.utc)
@@ -72,6 +75,7 @@ class TaskMessage:
             "max_retries": self.max_retries,
             "retry_delay": self.retry_delay,
             "retry_backoff": self.retry_backoff,
+            "timeout": self.timeout,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "result_ttl": self.result_ttl,

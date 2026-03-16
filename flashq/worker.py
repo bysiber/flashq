@@ -27,7 +27,7 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from typing import TYPE_CHECKING, Any
 
 from flashq.enums import TaskState
-from flashq.exceptions import TaskNotFoundError, TaskRetryError
+from flashq.exceptions import TaskNotFoundError, TaskRetryError, TaskTimeoutError
 from flashq.models import TaskMessage, TaskResult
 
 if TYPE_CHECKING:
@@ -196,7 +196,10 @@ class Worker:
         )
 
         try:
-            if inspect.iscoroutinefunction(task.fn):
+            timeout = message.timeout
+            if timeout is not None:
+                result = self._run_with_timeout(task.fn, message, timeout)
+            elif inspect.iscoroutinefunction(task.fn):
                 result = self._run_async(task.fn, message)
             else:
                 result = task.fn(*message.args, **message.kwargs)
@@ -204,6 +207,21 @@ class Worker:
             mw.after_execute(message, result)
             self._store_success(message, result=result, started_at=started_at)
             self._tasks_processed += 1
+
+        except TaskTimeoutError:
+            self._tasks_failed += 1
+            tb_str = f"TaskTimeoutError: Task {message.task_name} exceeded {message.timeout}s timeout"
+            logger.error("Task %s [%s] timed out after %ss",
+                         message.task_name, message.id[:8], message.timeout)
+
+            if message.retries < message.max_retries:
+                self._handle_retry(message, started_at=started_at)
+            else:
+                mw.on_dead(message, TaskTimeoutError(message.id, message.timeout or 0))
+                self._store_failure(
+                    message, error=tb_str, traceback_str=tb_str,
+                    started_at=started_at, state=TaskState.DEAD,
+                )
 
         except TaskRetryError:
             self._handle_retry(message, started_at=started_at)
@@ -239,6 +257,33 @@ class Worker:
             return loop.run_until_complete(fn(*message.args, **message.kwargs))
         finally:
             loop.close()
+
+    def _run_with_timeout(self, fn, message: TaskMessage, timeout: float) -> Any:
+        """Run a task with a timeout using a separate thread.
+
+        If the task exceeds the timeout, raises TaskTimeoutError.
+        Note: the timed-out task thread may continue running in the background
+        but its result will be ignored.
+        """
+        from concurrent.futures import ThreadPoolExecutor
+        from concurrent.futures import TimeoutError as FuturesTimeout
+
+        executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="flashq-timeout")
+        try:
+            if inspect.iscoroutinefunction(fn):
+                fut = executor.submit(self._run_async, fn, message)
+            else:
+                fut = executor.submit(fn, *message.args, **message.kwargs)
+
+            try:
+                return fut.result(timeout=timeout)
+            except FuturesTimeout:
+                # Cancel won't stop a running thread, but prevents queued work
+                fut.cancel()
+                raise TaskTimeoutError(message.id, timeout) from None
+        finally:
+            # shutdown(wait=False) so we don't block on the still-running thread
+            executor.shutdown(wait=False)
 
     def _store_success(
         self, message: TaskMessage, *, result: Any,
@@ -295,6 +340,7 @@ class Worker:
             max_retries=message.max_retries,
             retry_delay=message.retry_delay,
             retry_backoff=message.retry_backoff,
+            timeout=message.timeout,
             created_at=message.created_at,
             result_ttl=message.result_ttl,
         )
@@ -319,8 +365,8 @@ class Worker:
                 args=msg.args, kwargs=msg.kwargs, priority=msg.priority,
                 state=TaskState.PENDING, retries=msg.retries,
                 max_retries=msg.max_retries, retry_delay=msg.retry_delay,
-                retry_backoff=msg.retry_backoff, created_at=msg.created_at,
-                result_ttl=msg.result_ttl,
+                retry_backoff=msg.retry_backoff, timeout=msg.timeout,
+                created_at=msg.created_at, result_ttl=msg.result_ttl,
             )
             self.app.backend.enqueue(immediate)
 

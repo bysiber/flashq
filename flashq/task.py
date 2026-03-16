@@ -111,6 +111,7 @@ class Task(Generic[P, R]):
         max_retries: int = 3,
         retry_delay: float = 60.0,
         retry_backoff: bool = False,
+        timeout: float | None = None,
         result_ttl: float = 3600.0,
     ) -> None:
         self.fn = fn
@@ -121,6 +122,7 @@ class Task(Generic[P, R]):
         self.max_retries = max_retries
         self.retry_delay = retry_delay
         self.retry_backoff = retry_backoff
+        self.timeout = timeout
         self.result_ttl = result_ttl
 
         # Preserve original function metadata
@@ -199,6 +201,7 @@ class Task(Generic[P, R]):
             max_retries=max_retries if max_retries is not None else self.max_retries,
             retry_delay=retry_delay if retry_delay is not None else self.retry_delay,
             retry_backoff=self.retry_backoff,
+            timeout=self.timeout,
             result_ttl=self.result_ttl,
         )
 
